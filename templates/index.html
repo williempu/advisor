@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advisor Selector 2021</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
+    <script>
+        $(function() {
+            $("#lecturerDiv").hide();
+            $("#btnSubmit").hide();
+
+            // call API to check on the student ID validity and if student has selected an advisor
+            $("#studentId").change(function () {
+                let studentId = $("#studentId").val();
+                $.ajax({
+                    method: "POST",
+                    url: "/transaction/checkStudent",
+                    data: JSON.stringify({
+                        "studentId": studentId,
+                    }),
+                }).done(function (response) {
+                    // show lecturer options and submit button
+                    if (response.data.dateSelected) {
+                        let msg = `You have selected <b>${response.data.lecturerName}</b> ${response.data.dateString}`;
+                        $("#studentName").html(response.data.studentName);
+                        $("#errorDiv").html(msg);
+                        $("#lecturerDiv").hide();
+                        $("#btnSubmit").hide();
+                    } else {
+                        $("#studentName").html(response.data.name);
+                        $("#errorDiv").html("");
+                        $("#lecturerDiv").show();
+                        $("#btnSubmit").show();
+                    }
+                }).fail(function (error) {
+                    if (error.responseJSON.data !== 1) {
+                        $("#errorDiv").html("Student ID not found");
+                    }
+                    $("#studentName").html("");
+                    $("#lecturerDiv").hide();
+                    $("#btnSubmit").hide();
+                });
+            });
+
+            // call the API to get all lecturers and generate <option>
+            $.ajax({
+                method: "GET",
+                url: "/lecturer",
+            }).done(function (response) {
+                let select = $("#lecturer");
+                $.each(response.data, function (i, lecturer) {
+                    select.append($("<option>", {
+                        value: lecturer.id,
+                        text: `${lecturer.name} (${lecturer.remaining} of ${lecturer.quota})`,
+                    }))
+                });
+            }).fail(function (error) {
+                $("#errorDiv").html("Cannot fetch quota data");
+            });
+
+            // API to store data
+            $("#btnSubmit").click(function () {
+                let studentId = $("#studentId").val();
+                let lecturerId = $("#lecturer").val();
+                $.ajax({
+                    method: "POST",
+                    url: "/transaction/create",
+                    data: JSON.stringify({
+                        "studentId": studentId,
+                        "lecturerId": lecturerId,
+                    }),
+                }).done(function (response) {
+                    // check for studentName, if there is any, meaning the kids
+                    // are trying to bypass the styling from inspect element
+                    if (response.data.studentName) {
+                        let msg = `You have selected <b>${response.data.lecturerName}</b> ${response.data.dateString}`;
+                        $("#studentName").html(response.data.studentName);
+                        $("#errorDiv").html(msg);
+                        $("#lecturerDiv").hide();
+                        $("#btnSubmit").hide();;
+                    } else {
+                        // no studentName, reload
+                        location.reload();
+                    }
+                }).fail(function (error) {
+                    $("#errorDiv").html("Error. Please contact Study Program");
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+<div class="container">
+    <div class="row mt-3">
+        <div class="col-6 offset-3 justify-content-center">
+            <div class="mb-3">
+                <label for="studentId" class="form-label">Student ID</label>
+                <input type="text" id="studentId" name="studentId" placeholder="Enter Student ID" class="form-control"/>
+            </div>
+            <div class="mb-3" id="studentName"></div>
+            <div class="mb-3" id="lecturerDiv">
+                <label for="lecturer" class="form-label">Lecturer</label>
+                <select id="lecturer" class="form-select">
+                    <option disabled selected value> -- Select a Lecturer -- </option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <button type="button" id="btnSubmit" class="btn btn-primary">Submit</button>
+            </div>
+            <div class="mb-3" id="errorDiv" style="color: red;"></div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
