@@ -4,15 +4,17 @@ import (
 	"advisor/app/lecturer"
 	"advisor/app/student"
 	"advisor/app/transaction"
-	"advisor/lib/response"
 	"database/sql"
+	"embed"
+	"log"
 	"net/http"
+	"text/template"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func GetRoutes(db *sql.DB) http.Handler {
+func GetRoutes(db *sql.DB, fs embed.FS) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
@@ -38,7 +40,12 @@ func GetRoutes(db *sql.DB) http.Handler {
 	})
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		response.RenderHTML(w, r, "", nil)
+		var templates = template.Must(template.ParseFS(fs, "templates/index.html"))
+		if err := templates.ExecuteTemplate(w, "index.html", nil); err != nil {
+			log.Fatalln(err.Error())
+			return
+		}
+		// response.RenderHTML(w, r, "", nil)
 	})
 
 	return r
