@@ -2,7 +2,6 @@ package transaction
 
 import (
 	"database/sql"
-	"log"
 	"time"
 )
 
@@ -48,7 +47,6 @@ func (r *TransactionRepo) GetByStudentId(studentId int) (*Transaction, error) {
 		"JOIN lecturers lect ON lect.id = trx.lecturer_id " +
 		"LEFT JOIN students std ON std.id = trx.student_id " +
 		"WHERE trx.student_id = $1"
-	log.Println(sql)
 	row := r.DB.QueryRow(sql, studentId)
 	if err := row.Scan(&transaction.Id, &transaction.Date, &transaction.StudentId, &transaction.StudentName, &transaction.LecturerId, &transaction.LecturerName); err != nil {
 		return nil, err
@@ -61,7 +59,7 @@ func (r *TransactionRepo) GetByStudentId(studentId int) (*Transaction, error) {
 // GetLecturerQuota returns the list of lecturers data with the quota and remaining slot
 func (r *TransactionRepo) GetLecturerQuota() ([]*LecturerQuota, error) {
 	var quotas []*LecturerQuota
-	sql := "SELECT lect.name AS name, lect.id AS id, lect.quota AS quota, COALESCE(COUNT(trx.id), 0) AS remaining FROM transactions trx LEFT JOIN lecturers lect ON lect.id = trx.lecturer_id GROUP BY lect.name, lect.id"
+	sql := "SELECT lect.name AS name, lect.id AS id, lect.quota AS quota, COALESCE(COUNT(trx.id), 0) AS remaining FROM lecturers lect LEFT JOIN transactions trx ON lect.id = trx.lecturer_id GROUP BY lect.name, lect.id ORDER BY lect.name"
 
 	rows, err := r.DB.Query(sql)
 	if err != nil {
