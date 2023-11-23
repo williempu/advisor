@@ -39,6 +39,30 @@ func NewRepo(db *sql.DB) *TransactionRepo {
 	return &TransactionRepo{DB: db}
 }
 
+func (r *TransactionRepo) GetAll() ([]*Transaction, error) {
+	var transactions []*Transaction
+	sql := "SELECT trx.id, trx.date_selected, trx.student_id, std.student_name, trx.lecturer_id, lect.name " +
+		"FROM transactions trx " +
+		"JOIN lecturers lect ON lect.id = trx.lecturer_id " +
+		"LEFT JOIN students std ON std.id = trx.student_id ORDER BY trx.student_id, trx.date_selected"
+	rows, err := r.DB.Query(sql)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var trx Transaction
+		if err := rows.Scan(&trx.Id, &trx.Date, &trx.StudentId, &trx.StudentName, &trx.LecturerId, &trx.LecturerName); err != nil {
+			return nil, err
+		}
+		trx.DateString = trx.Date.Format("02 Jan 2006 15:04")
+		transactions = append(transactions, &trx)
+	}
+
+	return transactions, nil
+}
+
 // GetByStudentId returns a Transaction by studentId
 func (r *TransactionRepo) GetByStudentId(studentId int) (*Transaction, error) {
 	var transaction Transaction

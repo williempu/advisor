@@ -24,6 +24,15 @@ func NewController(studentRepo *student.StudentRepo, lecturerRepo *lecturer.Lect
 	}
 }
 
+func (c *Controller) GetAll(w http.ResponseWriter, r *http.Request) {
+	transactions, err := c.Repo.GetAll()
+	if err != nil {
+		c.JSON.HttpStatus(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	c.JSON.HttpStatus(w, http.StatusOK, transactions)
+}
+
 func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
 	// check student and lecturer existence first
 	// then validate if student has already selected the lecturer

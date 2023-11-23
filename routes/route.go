@@ -35,6 +35,7 @@ func GetRoutes(db *sql.DB, fs embed.FS) http.Handler {
 	})
 
 	r.Route("/transaction", func(trxRoute chi.Router) {
+		trxRoute.Get("/all", transactionController.GetAll)
 		trxRoute.Post("/create", transactionController.Create)
 		trxRoute.Post("/checkStudent", transactionController.GetByStudentId)
 	})
@@ -42,6 +43,15 @@ func GetRoutes(db *sql.DB, fs embed.FS) http.Handler {
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		var templates = template.Must(template.ParseFS(fs, "templates/index.html"))
 		if err := templates.ExecuteTemplate(w, "index.html", nil); err != nil {
+			log.Fatalln(err.Error())
+			return
+		}
+		// response.RenderHTML(w, r, "", nil)
+	})
+
+	r.Get("/transactions", func(w http.ResponseWriter, r *http.Request) {
+		var templates = template.Must(template.ParseFS(fs, "templates/statistics.html"))
+		if err := templates.ExecuteTemplate(w, "statistics.html", nil); err != nil {
 			log.Fatalln(err.Error())
 			return
 		}

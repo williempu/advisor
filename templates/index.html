@@ -11,11 +11,18 @@
 
     <script>
         $(function() {
+            // everytime the lecturer change, get the selected option and add to lecturerName in confirmation
+            $("#lecturer").change(function () {
+                let selected = $("#lecturer").find("option:selected");
+                $("#lecturerName").html(selected.text());
+            });
+
+            // hide both submit and lecturer selection
             $("#lecturerDiv").hide();
             $("#btnSubmit").hide();
 
             // call API to check on the student ID validity and if student has selected an advisor
-            $("#studentId").change(function () {
+            $("#btnCheck").click(function () {
                 let studentId = $("#studentId").val();
                 $.ajax({
                     method: "POST",
@@ -63,10 +70,15 @@
                 $("#errorDiv").html("Cannot fetch quota data");
             });
 
-            // API to store data
-            $("#btnSubmit").click(function () {
-                let studentId = $("#studentId").val();
+            // API to store data. Student clicks the confirm button
+            $("#btnConfirm").click(function () {
+                // just a precaution
                 let lecturerId = $("#lecturer").val();
+                if (lecturerId == null || lecturerId == undefined || lecturerId == "") {
+                    alert("Please select a lecturer");
+                    return;
+                }
+                let studentId = $("#studentId").val();
                 $.ajax({
                     method: "POST",
                     url: "/transaction/create",
@@ -96,11 +108,13 @@
 </head>
 <body>
 <div class="container">
+    <h4 class="text-center mt-2">Final Project Advisor</h4>
     <div class="row mt-3">
         <div class="col-6 offset-3 justify-content-center">
-            <div class="mb-3">
-                <label for="studentId" class="form-label">Student ID</label>
+            <div class="mb-3 input-group">
                 <input type="text" id="studentId" name="studentId" placeholder="Enter Student ID" class="form-control"/>
+                <button type="button" id="btnCheck" class="btn btn-outline-primary">Check</button>
+                <button type="button" id="btnHelp" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#helpModal">Help</button>
             </div>
             <div class="mb-3" id="studentName"></div>
             <div class="mb-3" id="lecturerDiv">
@@ -110,9 +124,52 @@
                 </select>
             </div>
             <div class="mb-3">
-                <button type="button" id="btnSubmit" class="btn btn-primary">Submit</button>
+                <button type="button" id="btnSubmit" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#confirmModal">Submit</button>
             </div>
             <div class="mb-3" id="errorDiv" style="color: red;"></div>
+        </div>
+    </div>
+
+    <!-- modal for Help -->
+    <div class="modal fade" id="helpModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title">How to choose?</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    Follow these steps:
+                    <ol>
+                        <li>Fill in your student ID</li>
+                        <li>Click button "Check"</li>
+                        <li>Select your advisor</li>
+                        <li>Click "Submit" after you are sure</li>
+                    </ol>
+                </div>
+                <div class="modal-footer">
+                    WARNING: You cannot change the selected advisor once you have submitted the result
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- modal for Confirmation -->
+    <div class="modal fade" id="confirmModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title">Are you sure?</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    You selected <span id="lecturerName"></span>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">No, Select Again</button>
+                    <button type="button" class="btn btn-success" id="btnConfirm">Yes, I am sure</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
